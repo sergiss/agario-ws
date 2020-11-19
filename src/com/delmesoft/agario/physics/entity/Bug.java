@@ -89,17 +89,13 @@ public class Bug extends Entity {
 		if(!remove) {			
 
 			Bug bug = (Bug) entity;
-
 			if (bug.parent == parent) { // Same Player
-
 				mass += entity.mass;
 				splitTime = getSplitTime(splitTime, entity.mass);
 				parent.childs.remove(entity);
 				parent.canEatSpikes = false;
 				entity.remove = true;
-
 			} else if (parent != null) {
-
 				float ratio = mass / entity.mass;
 				if (ratio > RATIO) {
 					mass += entity.mass;
@@ -163,7 +159,7 @@ public class Bug extends Entity {
 
 		if(mass - SHARED_MASS >= MIN_MASS_TO_SPLIT) {
 
-			Food food = new Food(color);
+			Bug food = new Bug(color);
 			
 			mass -= (food.mass = SHARED_MASS);
 

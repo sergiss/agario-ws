@@ -46,16 +46,11 @@ public class Virus extends Entity {
 	public void collideWith(Entity entity) {
 		
 		Bug bug = ((Bug) entity);
-		
 		float ratio = entity.mass / mass;
 		if (ratio > RATIO) {
-
 			remove = true;
-			
 			bug.mass += mass;
-
 			if (!bug.parent.canEatSpikes) {
-
 				bug.parent.canEatSpikes = true;
 				int n = (int) Math.min(16, (int) (bug.mass / (Bug.MIN_MASS_TO_SPLIT - 15)));
 				float iter = Utils.PI2 / n;
@@ -63,9 +58,7 @@ public class Virus extends Entity {
 					tmp.set((float) Math.cos(i * iter), (float) Math.sin(i * iter)).nor();
 					bug.split(tmp.x, tmp.y, Bug.MIN_MASS_TO_SPLIT - 15);
 				}
-				
 				tmp.setRandom().nor();
-				
 				for (int i = 0; i < 3; i++) {
 					if(bug.split(tmp.x, tmp.y)) {
 						bug = bug.parent.childs.getLast();
@@ -73,14 +66,10 @@ public class Virus extends Entity {
 						break;
 					}
 				}
-
 			}
-
 		} else if(bug.parent == null) { // shared bug
-			
 			entity.remove = true;
 			mass += entity.mass;
-			
 			if(mass > 170F) {					
 				mass = DEFAULT_MASS;					
 				Virus spike = new Virus(0);					
@@ -88,7 +77,6 @@ public class Virus extends Entity {
 				spike.force.set(entity.force).add(entity.velocity).nor().scl(DEFAULT_MASS * 4F);
 				world.add(spike);									
 			}			
-			
 		}
 
 	}

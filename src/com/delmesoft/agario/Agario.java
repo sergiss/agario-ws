@@ -8,15 +8,15 @@ import java.util.Random;
 
 import com.delmesoft.agario.physics.World;
 import com.delmesoft.agario.physics.broadphase.AABB;
+import com.delmesoft.agario.physics.entity.Bug;
 import com.delmesoft.agario.physics.entity.Entity;
-import com.delmesoft.agario.physics.entity.Food;
 import com.delmesoft.agario.physics.entity.Player;
 import com.delmesoft.agario.physics.entity.Virus;
 import com.delmesoft.agario.utils.Loop;
 import com.delmesoft.agario.utils.Loop.LoopListener;
-import com.delmesoft.agario.utils.protocol.ProtocolData;
 import com.delmesoft.agario.utils.Utils;
 import com.delmesoft.agario.utils.Vec2;
+import com.delmesoft.agario.utils.protocol.ProtocolData;
 import com.delmesoft.httpserver.Session;
 
 /*
@@ -94,8 +94,8 @@ public class Agario extends Loop implements LoopListener {
 			@Override
 			public void remove(Entity entity) {
 				super.remove(entity);
-				if (entity.getType() == Entity.FOOD) {
-					Entity _entity = new Food(random.nextInt(COLOR_COUNT));
+				if (entity.getType() == Entity.BUG && ((Bug) entity).parent == null) { // Food
+					Entity _entity = new Bug(random.nextInt(COLOR_COUNT));
 					_entity.position.set(random.nextInt(w) - hw, random.nextInt(h) - hh);
 					world.add(_entity);
 				} else if (entity.getType() == Entity.VIRUS) {
@@ -109,7 +109,7 @@ public class Agario extends Loop implements LoopListener {
 		Entity entity;
 		int i;
 		for (i = 0; i < DEFAULT_FOOD_COUNT; i++) {
-			entity = new Food(random.nextInt(COLOR_COUNT));
+			entity = new Bug(random.nextInt(COLOR_COUNT)); // Food
 			entity.position.set(random.nextInt(w) - hw, random.nextInt(h) - hh);
 			world.add(entity);
 		}

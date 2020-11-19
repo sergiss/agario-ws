@@ -54,7 +54,6 @@ public class World extends AABB {
 			}
 
 			// World bounds collision detection
-
 			float x = entity.position.x + entity.velocity.x;
 			float diff = x - entity.radius;
 			if (diff < min.x) {
@@ -132,9 +131,7 @@ public class World extends AABB {
 	}
 	
 	public class MyIterator implements Iterator<Entity> {
-
 		public Entity entityA;
-
 		@Override
 		public boolean next(Entity entityB) {
 			if(entityA.remove) return false;
