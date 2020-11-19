@@ -40,13 +40,9 @@ public class World extends AABB {
 	public void step() {
 
 		Entity entity;
-
 		int i, n = entities.size();
-
 		for (i = 0; i < n; i++) {
-
 			entity = entities.get(i);
-
 			if (entity.getType() == Entity.BUG) {
 				entity.matched = true;
 				iterator.entityA = entity;
@@ -83,7 +79,6 @@ public class World extends AABB {
 				entity.velocity.y *= -BOUNCE;
 				//	entityA.force.y = 0;
 			}
-
 		}	
 		
 		for (i = 0; i < n; i++) {
@@ -138,43 +133,40 @@ public class World extends AABB {
 			if (!entityB.matched && !entityB.remove) {
 				if (entityB.overlap(entityA)) { // AABB test
 					Vec2 d = tmp1.set(entityB.position).sub(entityA.position);
-					final float len2 = d.len2();
+					float len2 = d.len2();
 					float radius = entityA.radius + entityB.radius;
 					if(len2 < radius * radius) { // Collision test
+						float distance = (float) StrictMath.sqrt(len2);
+						float penetration = radius - distance;
+						final Bug bugA = (Bug) entityA;
 						if(entityB.getType() == Entity.FOOD) {						
 							entityA.mass += entityB.mass;
 							entityB.remove = true;						
-						} else {
-							float distance = (float) StrictMath.sqrt(len2);
-							float penetration = radius - distance;
-							Bug bugA = (Bug) entityA;
-							if(entityB.getType() == Entity.BUG) {
-								Bug bugB = (Bug) entityB;
-								if(bugB.parent == bugA.parent && (bugB.parent == null || (bugB.splitTime + bugA.splitTime) > 0f)) {
-									float combinedMass = entityA.mass + entityB.mass;
-									if(distance > 0) {
-										// normals
-										d.scl(1F / distance);
-									} else {
-										d.set(1, 0);
-									}
-									Vec2 rv = tmp2.set(entityB.velocity).sub(entityA.velocity);									
-									float vn = rv.dot(d);
-									if (vn < 0F) {
-										float j = vn / combinedMass;
-										entityA.velocity.addScl(d, j * entityB.mass);
-										entityB.velocity.subScl(d, j * entityA.mass);
-									}
-									final float correction = Math.max(penetration - SLOP, 0.0f) / combinedMass * PERCENT;
-									entityA.position.subScl(d, correction * entityB.mass);
-									entityB.position.addScl(d, correction * entityA.mass);
-								} else if(penetration > Math.min(entityA.radius, entityB.radius) ) {									
-									entityA.collideWith(entityB);
-									entityB.collideWith(entityA);									
+						} else if(entityB.getType() == Entity.BUG) {
+							final Bug bugB = (Bug) entityB;
+							if(bugB.parent == bugA.parent && (bugB.parent == null || (bugB.splitTime + bugA.splitTime) > 0f)) {
+								float combinedMass = entityA.mass + entityB.mass;
+								if(distance > 0) {
+									d.scl(1F / distance);
+								} else {
+									d.set(1, 0);
 								}
-							} else if(penetration >= Math.min(entityA.radius, entityB.radius) * 1.25f ) { // Virus test						
-								entityB.collideWith(entityA);								
-							} // Virus test
+								Vec2 rv = tmp2.set(entityB.velocity).sub(entityA.velocity);									
+								float vn = rv.dot(d);
+								if (vn < 0F) {
+									float j = vn / combinedMass;
+									entityA.velocity.addScl(d, j * entityB.mass);
+									entityB.velocity.subScl(d, j * entityA.mass);
+								}
+								final float correction = Math.max(penetration - SLOP, 0.0f) / combinedMass * PERCENT;
+								entityA.position.subScl(d, correction * entityB.mass);
+								entityB.position.addScl(d, correction * entityA.mass);
+							} else if(penetration > Math.min(entityA.radius, entityB.radius) ) {									
+								entityA.collideWith(entityB);
+								entityB.collideWith(entityA);									
+							}
+						} else if(penetration >= Math.min(entityA.radius, entityB.radius) * 1.25f ) { // Virus test						
+							entityB.collideWith(entityA);								
 						}
 					} // Collision test
 				} else {

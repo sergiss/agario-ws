@@ -53,7 +53,7 @@ public class Bug extends Entity {
 	public float splitTime;
 
 	public Player parent;
-
+	
 	public Bug(int color) {
 		super(color, DEFAULT_MASS);
 	}
@@ -64,17 +64,14 @@ public class Bug extends Entity {
 
 		if(mass > DEFAULT_MASS) {
 			tick++;
-
 			if(tick > 60) {
 				tick = 0;
 				accumEmaciation += mass * EMACIATION;
 			}
-
 			if(accumEmaciation - 1f > 0f) {
 				accumEmaciation--;
 				mass--;
 			}			
-
 		}
 
 		if(splitTime > 0f) {
@@ -87,7 +84,6 @@ public class Bug extends Entity {
 	public void collideWith(Entity entity) { // Overlaps
 		
 		if(!remove) {			
-
 			Bug bug = (Bug) entity;
 			if (bug.parent == parent) { // Same Player
 				mass += entity.mass;
@@ -107,9 +103,7 @@ public class Bug extends Entity {
 					}
 					entity.remove = true;
 				}
-
 			}
-
 		} // remove check
 
 	}
@@ -119,84 +113,55 @@ public class Bug extends Entity {
 	}
 
 	public boolean split(float nx, float ny, float newMass){
-
 		if(!remove) {
-
 			float diff = mass - newMass;
-
 			if(newMass >= Bug.DEFAULT_MASS && diff >= Bug.DEFAULT_MASS) {
-
 				Bug bug = new Bug(color);
-				
 				mass = diff;
 				splitTime = getSplitTime(mass);
-				
 				bug.mass = newMass;				
 				bug.splitTime = getSplitTime(bug.mass);
-								
 				bug.force.set(nx, ny).scl((float) (1.0 / (8 * Math.pow(bug.mass, -0.439)) * 380));
-				
 				//radius = massToRadius(mass, DENSITY);
 				//bug.radius = massToRadius(bug.mass, DENSITY);
-
 				//float r2 = radius + bug.radius;
-
 				bug.position.x = position.x + nx;
 				bug.position.y = position.y + ny;
-
 				parent.childs.add(bug);
 				bug.parent = parent;
-							
 				world.add(bug);
 				return true;
 			}
 		}
-		
 		return false;
 	}
 
 	public void share(float x, float y) {
-
 		if(mass - SHARED_MASS >= MIN_MASS_TO_SPLIT) {
-
 			Bug food = new Bug(color);
-			
 			mass -= (food.mass = SHARED_MASS);
-
 			float rnd = Utils.random(-0.2F, 0.2F);
-
 			float dx = x - position.x;
 			float dy = y - position.y;
-
 			tmp.set(dx, dy).nor();
-
 			food.force.set(tmp).rotate(rnd).scl((float) (1.0 / (8.0 * Math.pow(food.mass, -0.439)) * 380));
-			
 			//radius = massToRadius(mass, DENSITY);
 			//food.radius = massToRadius(food.mass, DENSITY);
-
 			tmp.scl(massToRadius(mass, DENSITY) + massToRadius(food.mass, DENSITY));
 			food.position.set(position).add(tmp);
-
 			world.add(food);
-
 		}
-
 	}
 
 	public void follow(Vec2 worldPoint) {
-
 		float dx = worldPoint.x - position.x;
 		float dy = worldPoint.y - position.y;
-
 		float len2 = dx * dx + dy * dy;
-
 		if(len2 != 0) {
 			float invDst = (float) (1f / StrictMath.sqrt(len2));
 			dx *= invDst;
 			dy *= invDst;
 		}
-
 		force.add(dx * FORCE, dy * FORCE);
 	}
 
