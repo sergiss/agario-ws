@@ -3,10 +3,8 @@ package com.delmesoft.agario;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.net.InetAddress;
 import java.util.Scanner;
 
-import com.delmesoft.httpserver.HttpException;
 import com.delmesoft.httpserver.HttpRequest;
 import com.delmesoft.httpserver.HttpResponse;
 import com.delmesoft.httpserver.HttpResponse.Status;

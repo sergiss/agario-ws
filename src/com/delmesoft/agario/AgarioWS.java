@@ -1,17 +1,9 @@
 package com.delmesoft.agario;
 
 import java.io.IOException;
-import java.util.Base64;
-import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
-import com.delmesoft.agario.input.Input;
-import com.delmesoft.agario.physics.entity.Bug;
-import com.delmesoft.agario.physics.entity.Entity;
-import com.delmesoft.agario.utils.Compressor;
-import com.delmesoft.agario.utils.Vec2;
+import com.delmesoft.agario.utils.protocol.ProtocolDataV1;
 import com.delmesoft.httpserver.Session;
 import com.delmesoft.httpserver.websocket.WebSocketHandler;
 import com.google.gson.Gson;
@@ -48,69 +40,15 @@ import com.google.gson.GsonBuilder;
  */
 public class AgarioWS extends WebSocketHandler {
 	
-	private final Executor executor;
 	private final Agario agario;
 	private final Gson gson;
 	
 	public AgarioWS() {
-		
-		agario = new Agario() {
-			final Compressor compressor = new Compressor();
-			@Override
-			protected void render(Vec2 center, float width, float height, List<Entity> entities, Session session) {
-				entities.sort(new Comparator<Entity>() {			
-					public int compare(Entity a, Entity b) {
-						return Float.compare(a.radius, b.radius);
-					}			
-				});
-				int n = entities.size() - 1;
-				StringBuilder sb = new StringBuilder();
-				sb.append('[');
-				if (n > -1) {
-					Entity entity;
-					for (int i = 0; i < n; i++) {
-						entity = entities.get(i);
-						append(sb, entity);
-						sb.append(',');
-					}
-					append(sb, entities.get(n));
-				}
-				sb.append(']');
-				final String json = String.format("{\"x\":%d,\"y\":%d,\"w\":%d,\"h\":%d,\"d\":%s}", (int) center.x, (int) center.y, (int) width, (int) height, sb.toString());
-				executor.execute(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							byte[] data = compressor.compress(json.getBytes());
-							String text = Base64.getEncoder().encodeToString(data);
-							// System.out.println("Compression: " + ((float)
-							// text.length() / json.length()));
-							sendText(text, session);
-						} catch (Throwable e) {
-							e.printStackTrace();
-							closeSession(session);
-						}
-					}
-				});
-				
-			}
-		};
+		agario = new Agario();
+		agario.setProtocolData(new ProtocolDataV1(this));
 		agario.start();
 		gson =  new GsonBuilder().create();
-		executor = Executors.newSingleThreadExecutor();
 		super.getIndexSet().add("/bugsws/websocketendpoint");
-	}
-	
-	private void append(StringBuilder sb, Entity entity) {
-		sb.append(entity.id).append(',');
-		sb.append('\"').append(entity.getType()).append(entity.color);
-		if (entity.getType() == Entity.BUG) {
-			sb.append(((Bug) entity).parent.name);
-		}
-		sb.append("\",");
-		sb.append((int) Math.ceil(entity.radius)).append(',');
-		sb.append( (int) entity.position.x).append(',');
-		sb.append( (int) entity.position.y  );	
 	}
 	
 	@Override
@@ -125,17 +63,14 @@ public class AgarioWS extends WebSocketHandler {
 	}
 
 	@Override
-	public void onData(byte[] data, int len, Session session) {
-	}
+	public void onData(byte[] data, int len, Session session) {}
 
 	@Override
 	public void onText(String text, Session session) {
-
 		try {
-			
 			Message message = gson.fromJson(text, Message.class);
 			List<Object> args = message.getArgs();
-			switch(message.getType()) {
+			switch (message.getType()) {
 				case Message.KEY_PRESSED: {
 					int keyCode = ((Number) args.get(0)).intValue();
 					boolean down = (boolean) args.get(1);
@@ -148,12 +83,11 @@ public class AgarioWS extends WebSocketHandler {
 					agario.onMouseMoved(x, y, session);
 					break;
 				}
-			}			
+			}
 		} catch (Throwable e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 			closeSession(session);
 		}
-
 	}
 	
 	public void closeSession(Session session) {

@@ -14,6 +14,7 @@ import com.delmesoft.agario.physics.entity.Player;
 import com.delmesoft.agario.physics.entity.Virus;
 import com.delmesoft.agario.utils.Loop;
 import com.delmesoft.agario.utils.Loop.LoopListener;
+import com.delmesoft.agario.utils.protocol.ProtocolData;
 import com.delmesoft.agario.utils.Utils;
 import com.delmesoft.agario.utils.Vec2;
 import com.delmesoft.httpserver.Session;
@@ -47,9 +48,9 @@ import com.delmesoft.httpserver.Session;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
-public abstract class Agario extends Loop implements LoopListener {
+public class Agario extends Loop implements LoopListener {
 	
-	public static final int FPS = 60;
+	public static final int FPS = 30;
 	
 	public static final int WORLD_WIDTH  = 4000;
 	public static final int WORLD_HEIGHT = 4000;
@@ -68,6 +69,8 @@ public abstract class Agario extends Loop implements LoopListener {
 
 	private final List<Runnable> postRunnables;
 	private final Map<Long, Player> playerMap;
+	
+	private ProtocolData protocolData;
 	
 	public Agario() {
 		postRunnables = new ArrayList<>();
@@ -139,11 +142,11 @@ public abstract class Agario extends Loop implements LoopListener {
 
 		// UPDATE CLIENTS *********************************************
 		List<Entity> entities = new ArrayList<Entity>();
-		final long currentTimeMillis = System.currentTimeMillis();
+//		final long currentTimeMillis = System.currentTimeMillis();
 		float size;
 		for(Player player : playerMap.values()) {
-			if(currentTimeMillis - player.getLastUpdate() > Player.UPDATE_TIME) {
-				player.setLastUpdate(currentTimeMillis);
+//			if(currentTimeMillis - player.getLastUpdate() > Player.UPDATE_TIME) {
+//				player.setLastUpdate(currentTimeMillis);
 				player.update();
 				player.getCenter(tmp1);
 				aabb.set(player);
@@ -152,16 +155,16 @@ public abstract class Agario extends Loop implements LoopListener {
 				aabb.max.add(size, size);
 				world.getAABBTree().query(aabb, entities);
 				if (entities.size() > 0) {
-					render(tmp1, aabb.getWidth(), aabb.getHeight(), entities, player.session);
+					protocolData.send(tmp1, aabb.getWidth(), aabb.getHeight(), entities, player.session);
 					entities.clear();
 				}
-			}
+//			}
 			player.follow(tmp2.set(player.getScreenPoint().x, player.getScreenPoint().y).add(tmp1));	
 		}
 		
 	}
 	
-	protected abstract void render(Vec2 center, float width, float height, List<Entity> entities, Session session);
+	// protected abstract void render(Vec2 center, float width, float height, List<Entity> entities, Session session);
 
 	public void addPostRunnable(Runnable runnable) {
 		synchronized (postRunnables) {
@@ -242,6 +245,14 @@ public abstract class Agario extends Loop implements LoopListener {
 		if(player != null) {
 			player.getScreenPoint().set(x, y);
 		}
+	}
+
+	public ProtocolData getProtocolData() {
+		return protocolData;
+	}
+
+	public void setProtocolData(ProtocolData protocolData) {
+		this.protocolData = protocolData;
 	}
 	
 }

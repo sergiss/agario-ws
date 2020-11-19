@@ -39,7 +39,7 @@ window.onload = function() {
 	document.body.scroll = "no"; // ie only
 
 	for(var i = 0; i < 10; i++) {
-		COLORS2[i] = shadeColor1(COLORS1[i], -10);
+		COLORS2[i] = shadeColor(COLORS1[i], -10);
 	}
 
 }
@@ -67,6 +67,7 @@ function sendMessage(message) {
 var host = prompt("Please enter host ip:", location.hostname ? location.hostname : 'localhost');
 
 var webSocket = new WebSocket('ws://' + host + ':8081/bugsws/websocketendpoint');
+webSocket.binaryType = "arraybuffer";
 
 webSocket.onopen = function (event) {
 
@@ -90,13 +91,13 @@ webSocket.onopen = function (event) {
 
 }
 
-
 webSocket.onmessage = function(event) {
 
-	var jsonObject = JSON.parse(decompress(event.data));
+	var data = pako.inflate(event.data);
 
-	var x = jsonObject.x;
-	var y = jsonObject.y;
+	let offset = 0;
+	var x = readInt(data, offset);
+	var y = readInt(data, offset + 4);
 
 	var ctx = canvas.getContext('2d');
 
@@ -106,7 +107,7 @@ webSocket.onmessage = function(event) {
 	ctx.canvas.width  = w;
 	ctx.canvas.height = h;
 
-	var ar = w > h ? w / jsonObject.w : h / jsonObject.h;
+	var ar = w > h ? w / readInt(data, offset + 8) : h / readInt(data, offset + 12);
 
 	//ctx.clearRect(0, 0, w, h);
 	ctx.fillStyle="#f2fbff";
@@ -117,30 +118,47 @@ webSocket.onmessage = function(event) {
 	drawGrid(x, y, w, h, ctx, ar);
 
 	ctx.textAlign="center";
-
-	var info, ci, r, lw, cx, cy, fs;
-	var data = jsonObject.d;
-
+	
+	offset += 16;
 	var len = data.length;
-	for(var i = 0; i < len; i+=5) {
-		info = data[i + 1];
-
-		ci = parseInt(info.charAt(1));
-		r  = data[i + 2] * ar;
+	var info, entities = [];
+	for(; offset < len;) {
+		info = readInt(data, offset);
+		entities.push({ 
+			ci: info >> 1, // color index
+			r : readInt(data, offset + 4), // radius
+			x : readInt(data, offset + 8), // x
+			y : readInt(data, offset + 12) // y
+		});
+		offset += 16; // TODO : id, name
+	}
+	
+	entities.sort(function(a, b) {		
+		return a.r - b.r;
+	});
+	
+	let entity, r, lw, cx, cy;
+	for(let i = 0; i < entities.length; ++i) {
+		entity = entities[i];
+		r = entity.r * ar;
 		lw = r * 0.1;
-
-		cx = (data[i + 3] - x) * ar;
-		cy = (data[i + 4] - y) * ar;
-
+		cx = (entity.x - x) * ar;
+		cy = (entity.y - y) * ar;
 		ctx.lineWidth = lw;		
-		ctx.fillStyle = COLORS1[ci];
+		ctx.fillStyle = COLORS1[entity.ci];
 		drawCircle(ctx, cx, cy, r - lw * 0.5);
 		ctx.fill();
-		ctx.strokeStyle = COLORS2[ci];
+		ctx.strokeStyle = COLORS2[entity.ci];
 		ctx.stroke();
-
 	}
 
+}
+
+function readInt(data, off) {
+	return (data[off] & 0xFF) << 24 
+		 | (data[off + 1] & 0xFF) << 16 
+		 | (data[off + 2] & 0xFF) << 8 
+		 | (data[off + 3] & 0xFF);
 }
 
 function drawGrid(x, y, w, h, ctx, ar) {
@@ -179,21 +197,6 @@ function drawGrid(x, y, w, h, ctx, ar) {
 
 }
 
-function decompress(base64data) {
-
-	// Decode base64 (convert ascii to binary)
-	var strData = atob(base64data);
-
-	// Convert binary string to character-number array
-	var charData= strData.split('').map(function(x){return x.charCodeAt(0);});
-
-	// Turn number array into byte-array
-	var binData = new Uint8Array(charData);
-
-	// Pako inflate
-	return pako.inflate(binData, { to: 'string' });
-}
-
 function drawCircle(ctx, x, y, r) {
 
 	ctx.beginPath();
@@ -217,7 +220,18 @@ function drawCircle(ctx, x, y, r) {
 
 }
 
-function shadeColor1(color, percent) {  // deprecated. See below.
-	var num = parseInt(color.slice(1),16), amt = Math.round(2.55 * percent), R = (num >> 16) + amt, G = (num >> 8 & 0x00FF) + amt, B = (num & 0x0000FF) + amt;
-	return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
+function shadeColor(color, percent) { // deprecated. See below.
+    var num = parseInt(color.slice(1), 16),
+        amt = Math.round(2.55 * percent),
+        R = (num >> 16) + amt,
+        G = (num >> 8 & 0x00FF) + amt,
+        B = (num & 0x0000FF) + amt;
+
+    return "#" + (0x1000000 + clamp(R, 0, 255) * 0x10000 + clamp(G, 0, 255) * 0x100 + clamp(B, 0, 255)).toString(16).slice(1);
+}
+
+function clamp(v, min, max) {
+	if(v < min) return min;
+	if(v > max) return max;
+	return v;
 }
