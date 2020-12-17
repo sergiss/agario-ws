@@ -1,5 +1,7 @@
 package com.delmesoft.agario.physics.entity;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.delmesoft.agario.physics.World;
 import com.delmesoft.agario.physics.broadphase.AABB;
 import com.delmesoft.agario.utils.Utils;
@@ -47,7 +49,7 @@ public abstract class Entity extends AABB {
 	
 	public static final float DENSITY = 0.025F;
 		
-	private static long ids;
+	private static AtomicLong ids = new AtomicLong();
 	
 	public final long id;
 	
@@ -74,7 +76,7 @@ public abstract class Entity extends AABB {
 		this.color = color;
 		this.mass = mass;
 		
-		this.id = ids++;
+		this.id = ids.getAndIncrement();
 		
 	}
 

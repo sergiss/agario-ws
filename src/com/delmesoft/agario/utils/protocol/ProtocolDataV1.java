@@ -35,8 +35,8 @@ public class ProtocolDataV1 implements ProtocolData {
 
 		//offset = writeInt(data, offset, entities.size()); // entity count
 		for (Entity entity : entities) {
-			data = ensureCapacity(data, offset, 16); // TODO : name, id
-			// offset += writeInt(data, offset, (int) entity.id);
+			data = ensureCapacity(data, offset, 20); // TODO : name
+			offset += writeInt(data, offset, (int) entity.id);
 			int info = (entity.color & 0xF) << 1;
 			if (entity.getType() == Entity.BUG) {
 				info |= 0b1;

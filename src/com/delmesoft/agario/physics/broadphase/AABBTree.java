@@ -2,7 +2,6 @@ package com.delmesoft.agario.physics.broadphase;
 
 import java.util.List;
 
-
 /*
 	Copyright (c) 2009 Erin Catto http://www.box2d.org
 	Copyright (c) 2016-2018 Lester Hedges <lester.hedges+aabbcc@gmail.com>

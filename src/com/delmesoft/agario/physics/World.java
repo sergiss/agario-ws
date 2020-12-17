@@ -132,8 +132,8 @@ public class World extends AABB {
 			if(entityA.remove) return false;
 			if (!entityB.matched && !entityB.remove) {
 				if (entityB.overlap(entityA)) { // AABB test
-					Vec2 d = tmp1.set(entityB.position).sub(entityA.position);
-					float len2 = d.len2();
+					Vec2 direction = tmp1.set(entityB.position).sub(entityA.position);
+					float len2 = direction.len2();
 					float radius = entityA.radius + entityB.radius;
 					if(len2 < radius * radius) { // Collision test
 						float distance = (float) StrictMath.sqrt(len2);
@@ -147,20 +147,20 @@ public class World extends AABB {
 							if(bugB.parent == bugA.parent && (bugB.parent == null || (bugB.splitTime + bugA.splitTime) > 0f)) {
 								float combinedMass = entityA.mass + entityB.mass;
 								if(distance > 0) {
-									d.scl(1F / distance);
+									direction.scl(1F / distance);
 								} else {
-									d.set(1, 0);
+									direction.set(1, 0);
 								}
 								Vec2 rv = tmp2.set(entityB.velocity).sub(entityA.velocity);									
-								float vn = rv.dot(d);
+								float vn = rv.dot(direction);
 								if (vn < 0F) {
 									float j = vn / combinedMass;
-									entityA.velocity.addScl(d, j * entityB.mass);
-									entityB.velocity.subScl(d, j * entityA.mass);
+									entityA.velocity.addScl(direction, j * entityB.mass);
+									entityB.velocity.subScl(direction, j * entityA.mass);
 								}
 								final float correction = Math.max(penetration - SLOP, 0.0f) / combinedMass * PERCENT;
-								entityA.position.subScl(d, correction * entityB.mass);
-								entityB.position.addScl(d, correction * entityA.mass);
+								entityA.position.subScl(direction, correction * entityB.mass);
+								entityB.position.addScl(direction, correction * entityA.mass);
 							} else if(penetration > Math.min(entityA.radius, entityB.radius) ) {									
 								entityA.collideWith(entityB);
 								entityB.collideWith(entityA);									

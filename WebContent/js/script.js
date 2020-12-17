@@ -29,6 +29,7 @@
  */
 var COLORS1=['#07FF42', '#FF0757', '#FFF007', '#FF5407', '#07FFF6', '#9CFF07', '#FFD907', '#0774FF', '#1A07FF', '#F007FF'];
 var COLORS2=[];
+
 var PI2=2.0 * Math.PI;
 
 var canvas;
@@ -108,8 +109,7 @@ webSocket.onmessage = function(event) {
 	ctx.canvas.height = h;
 
 	var ar = w > h ? w / readInt(data, offset + 8) : h / readInt(data, offset + 12);
-
-	//ctx.clearRect(0, 0, w, h);
+	
 	ctx.fillStyle="#f2fbff";
 	ctx.fillRect(0, 0, w, h);
 
@@ -120,26 +120,26 @@ webSocket.onmessage = function(event) {
 	ctx.textAlign="center";
 	
 	offset += 16;
-	var len = data.length;
-	var info, entities = [];
-	for(; offset < len;) {
-		info = readInt(data, offset);
+	let info, id, entities = [];
+	for(; offset < data.length;) {
+		id   = readInt(data, offset);
+		info = readInt(data, offset + 4);
 		entities.push({ 
-			ci: info >> 1, // color index
-			r : readInt(data, offset + 4), // radius
-			x : readInt(data, offset + 8), // x
-			y : readInt(data, offset + 12) // y
-		});
-		offset += 16; // TODO : id, name
+				id: id,
+				ci: info >> 1, // color index
+				r : readInt(data, offset +  8), // radius
+				x : readInt(data, offset + 12), // x
+				y : readInt(data, offset + 16)  // y
+			});
+		offset += 20; // TODO : id, name
 	}
 	
 	entities.sort(function(a, b) {		
 		return a.r - b.r;
 	});
 	
-	let entity, r, lw, cx, cy;
-	for(let i = 0; i < entities.length; ++i) {
-		entity = entities[i];
+	let r, lw, cx, cy;
+	entities.forEach(function(entity) {
 		r = entity.r * ar;
 		lw = r * 0.1;
 		cx = (entity.x - x) * ar;
@@ -150,12 +150,12 @@ webSocket.onmessage = function(event) {
 		ctx.fill();
 		ctx.strokeStyle = COLORS2[entity.ci];
 		ctx.stroke();
-	}
-
+	});
+	
 }
 
 function readInt(data, off) {
-	return (data[off] & 0xFF) << 24 
+	return (data[off    ] & 0xFF) << 24 
 		 | (data[off + 1] & 0xFF) << 16 
 		 | (data[off + 2] & 0xFF) << 8 
 		 | (data[off + 3] & 0xFF);
@@ -220,7 +220,7 @@ function drawCircle(ctx, x, y, r) {
 
 }
 
-function shadeColor(color, percent) { // deprecated. See below.
+function shadeColor(color, percent) {
     var num = parseInt(color.slice(1), 16),
         amt = Math.round(2.55 * percent),
         R = (num >> 16) + amt,
